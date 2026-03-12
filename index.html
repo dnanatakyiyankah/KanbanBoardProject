@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Kanban Board</title>
+
+<style>
+
+body{
+font-family:Arial, sans-serif;
+background:#f4f6fb;
+margin:0;
+padding:20px;
+text-align:center;
+}
+
+header{
+margin-bottom:30px;
+}
+
+header h1{
+margin-bottom:5px;
+}
+
+header p{
+color:#666;
+}
+
+.task-input{
+margin-bottom:20px;
+}
+
+.task-input input{
+padding:10px;
+width:250px;
+border-radius:5px;
+border:1px solid #ccc;
+}
+
+.task-input button{
+padding:10px 15px;
+border:none;
+background:#4CAF50;
+color:white;
+border-radius:5px;
+cursor:pointer;
+}
+
+.board{
+display:flex;
+gap:20px;
+justify-content:center;
+flex-wrap:wrap;
+}
+
+.column{
+background:white;
+width:300px;
+min-height:300px;
+padding:15px;
+border-radius:10px;
+box-shadow:0 3px 10px rgba(0,0,0,0.1);
+}
+
+#todo{
+border-top:5px solid #3498db;
+}
+
+#doing{
+border-top:5px solid #f1c40f;
+}
+
+#done{
+border-top:5px solid #2ecc71;
+}
+
+.column h2{
+margin-top:0;
+}
+
+.task{
+background:#3498db;
+color:white;
+padding:10px;
+margin:10px 0;
+border-radius:6px;
+cursor:grab;
+display:flex;
+justify-content:space-between;
+align-items:center;
+
+transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task:hover{
+transform:scale(1.03);
+box-shadow:0 5px 10px rgba(0,0,0,0.2);
+}
+
+.task-text{
+flex:1;
+text-align:left;
+}
+
+.buttons{
+display:flex;
+gap:5px;
+}
+
+.buttons button{
+border:none;
+padding:6px 8px;
+cursor:pointer;
+border-radius:4px;
+font-size:14px;
+transition:0.2s;
+}
+
+.edit{
+background:#f1c40f;
+}
+
+.delete{
+background:#e74c3c;
+color:white;
+}
+
+.buttons button:hover{
+transform:scale(1.1);
+}
+
+.dragging{
+opacity:0.5;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+<h1>My Kanban Board</h1>
+<p>Task Manager built with HTML, CSS & JavaScript</p>
+</header>
+
+<div class="task-input">
+<input type="text" id="taskInput" placeholder="Enter new task">
+<button onclick="addTask()">Add Task</button>
+</div>
+
+<div class="board" id="board">
+
+<div class="column" id="todo">
+<h2>To Do</h2>
+</div>
+
+<div class="column" id="doing">
+<h2>Doing</h2>
+</div>
+
+<div class="column" id="done">
+<h2>Done</h2>
+</div>
+
+</div>
+
+<script>
+  const columns = document.querySelectorAll(".column");
+
+function createTask(text){
+
+const task = document.createElement("div");
+task.classList.add("task");
+task.setAttribute("draggable","true");
+
+const taskText = document.createElement("span");
+taskText.classList.add("task-text");
+taskText.innerText = text;
+
+const buttons = document.createElement("div");
+buttons.classList.add("buttons");
+
+const editBtn = document.createElement("button");
+editBtn.innerText="✏️";
+editBtn.classList.add("edit");
+
+editBtn.onclick=function(){
+
+let newText = prompt("Edit task:", taskText.innerText);
+
+if(newText){
+taskText.innerText = newText;
+saveBoard();
+}
+
+};
+
+const deleteBtn=document.createElement("button");
+deleteBtn.innerText="🗑️";
+deleteBtn.classList.add("delete");
+
+deleteBtn.onclick=function(){
+task.remove();
+saveBoard();
+};
+
+buttons.appendChild(editBtn);
+buttons.appendChild(deleteBtn);
+
+task.appendChild(taskText);
+task.appendChild(buttons);
+
+task.addEventListener("dragstart",()=>{
+task.classList.add("dragging");
+});
+
+task.addEventListener("dragend",()=>{
+task.classList.remove("dragging");
+saveBoard();
+});
+
+return task;
+
+}
+
+function addTask(){
+
+const input=document.getElementById("taskInput");
+
+if(input.value.trim()==="") return;
+
+const task=createTask(input.value);
+
+document.getElementById("todo").appendChild(task);
+
+input.value="";
+
+saveBoard();
+
+}
+
+columns.forEach(column=>{
+
+column.addEventListener("dragover",e=>{
+
+e.preventDefault();
+
+const dragging=document.querySelector(".dragging");
+
+if(dragging){
+column.appendChild(dragging);
+}
+
+});
+
+});
+
+function saveBoard(){
+
+const boardData = {
+todo:[],
+doing:[],
+done:[]
+};
+
+document.querySelectorAll("#todo .task-text").forEach(t=>{
+boardData.todo.push(t.innerText);
+});
+
+document.querySelectorAll("#doing .task-text").forEach(t=>{
+boardData.doing.push(t.innerText);
+});
+
+document.querySelectorAll("#done .task-text").forEach(t=>{
+boardData.done.push(t.innerText);
+});
+
+localStorage.setItem("kanbanBoard", JSON.stringify(boardData));
+
+}
+
+function loadBoard(){
+
+const data = JSON.parse(localStorage.getItem("kanbanBoard"));
+
+if(!data) return;
+
+data.todo.forEach(text=>{
+document.getElementById("todo").appendChild(createTask(text));
+});
+
+data.doing.forEach(text=>{
+document.getElementById("doing").appendChild(createTask(text));
+});
+
+data.done.forEach(text=>{
+document.getElementById("done").appendChild(createTask(text));
+});
+
+}
+
+loadBoard();
+</script>
+
+</body>
+</html>
